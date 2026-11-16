@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Syllabus to Study Plan</title>
+<meta name="description" content="Paste your syllabus and exam date. Get a day-by-day study plan weighted by topic difficulty that reschedules when you fall behind.">
+<style>
+:root{--bg:#f6f7fb;--card:#fff;--bd:#e2e5ee;--tx:#14171f;--mu:#667085;--ac:#5b5fe8;--acx:#fff;--ok:#12a150;--warn:#d97706;--bad:#e5484d;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#0b0d12;--card:#151923;--bd:#232936;--tx:#f8fafc;--mu:#94a3b8;--ac:#7c80f5;--acx:#0b0d12;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#0b0d12;--card:#151923;--bd:#232936;--tx:#f8fafc;--mu:#94a3b8;--ac:#7c80f5;--acx:#0b0d12;--ok:#34d399;--warn:#fbbf24;--bad:#f87171;color-scheme:dark}
+*{box-sizing:border-box}[hidden]{display:none!important}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
+.wrap{max-width:680px;margin:0 auto;padding:16px}
+h1{font-size:23px;margin:4px 0 2px}.sub{color:var(--mu);margin:0 0 14px;font-size:14px}
+input,select,textarea,button{font:inherit;color:var(--tx);background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px 12px;width:100%}
+textarea{min-height:150px;resize:vertical}button{cursor:pointer;width:auto}
+.pri{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+.row{display:flex;gap:8px;margin-bottom:8px;align-items:center;flex-wrap:wrap}.row>*{flex:1;min-width:110px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:14px;margin-bottom:10px}
+.lab{font-size:12px;color:var(--mu);margin:0 0 3px}.small{font-size:12px;color:var(--mu)}.bad{color:var(--bad)}
+.topic{display:flex;gap:8px;align-items:center;margin-bottom:6px}.topic span{flex:1;font-size:14px}.topic select{width:105px;padding:6px}
+.x{border:0;background:none;color:var(--mu);padding:4px 8px;font-size:16px}
+.bar{height:10px;background:var(--bd);border-radius:99px;overflow:hidden;margin:8px 0}.fill{height:100%;background:var(--ok);border-radius:99px}
+.stats{display:flex;gap:14px;flex-wrap:wrap;font-size:14px}.stats b{font-size:20px;display:block}
+.banner{border:1px solid var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--card));border-radius:14px;padding:12px;margin-bottom:10px}
+.dh{display:flex;justify-content:space-between;margin-bottom:6px;font-weight:600}
+.tag{font-size:11px;padding:2px 8px;border-radius:99px;border:1px solid var(--bd);margin-left:6px;font-weight:500}
+.task{display:flex;gap:10px;align-items:flex-start;padding:6px 0;border-top:1px solid var(--bd)}
+.task input{width:20px;height:20px;margin-top:2px;flex:none}.task.done span{text-decoration:line-through;color:var(--mu)}
+.task span{flex:1;font-size:14px}.task em{font-style:normal;color:var(--mu);font-size:13px;white-space:nowrap}
+.today{border-color:var(--ac)}.miss{border-color:var(--bad)}
+.d1{color:var(--ok)}.d2{color:var(--warn)}.d3{color:var(--bad)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>📅 Syllabus to Study Plan</h1>
+  <p class="sub">Paste your syllabus and exam date. Get a day-by-day plan that reschedules when you fall behind.</p>
+
+  <div id="setup">
+    <div class="card">
+      <div class="row">
+        <div><p class="lab">Exam date</p><input id="exam" type="date"></div>
+        <div><p class="lab">Start date</p><input id="start" type="date"></div>
+        <div><p class="lab">Study hours / day</p><input id="hpd" type="number" min="1" max="14" step="0.5" value="3"></div>
+      </div>
+      <p class="lab">Syllabus (one topic or unit per line; commas also split topics)</p>
+      <textarea id="syl" placeholder="Unit 1: Introduction to DBMS, ER model, Keys&#10;Unit 2: Normalization, Functional dependencies&#10;Unit 3: Transactions, Concurrency control, Deadlocks"></textarea>
+      <div class="row" style="margin-top:8px">
+        <button class="pri" id="analyse">Analyse syllabus</button>
+        <button id="example">Load example</button>
+      </div>
+      <p id="err" class="small bad"></p>
+    </div>
+
+    <div class="card" id="topics-card" hidden>
+      <p class="lab">Detected topics. Adjust difficulty; harder topics get more time.</p>
+      <div id="topics"></div>
+      <button class="pri" id="build" style="margin-top:8px">Build my plan</button>
+    </div>
+  </div>
+
+  <div id="plan" hidden>
+    <div class="card">
+      <div class="stats">
+        <div><b id="s-days">–</b>days to exam</div>
+        <div><b id="s-pct">0%</b>completed</div>
+        <div><b id="s-hrs">–</b>hours left</div>
+      </div>
+      <div class="bar"><div class="fill" id="pbar" style="width:0%"></div></div>
+      <div class="row" style="margin:0">
+        <button id="copy">Copy plan</button>
+        <button id="edit">Edit setup</button>
+        <button id="reset">Reset</button>
+      </div>
+    </div>
+    <div id="banner" class="banner" hidden></div>
+    <div id="days"></div>
+  </div>
+</div>
+
+<script>
+var KEY="studyplan.v1";
+var S={exam:"",start:"",hpd:3,topics:[],tasks:[],note:""};
+try{var raw=localStorage.getItem(KEY);if(raw)S=Object.assign(S,JSON.parse(raw))}catch(e){}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}}
+function $(id){return document.getElementById(id)}
+function esc(t){var d=document.createElement("div");d.textContent=t;return d.innerHTML}
+function iso(d){return d.toLocaleDateString("en-CA")}
+function pd(s){var p=s.split("-").map(Number);return new Date(p[0],p[1]-1,p[2])}
+function add(s,n){var d=pd(s);d.setDate(d.getDate()+n);return iso(d)}
+function diff(a,b){return Math.round((pd(b)-pd(a))/864e5)}
+function today(){return iso(new Date())}
+function fmt(s){return pd(s).toLocaleDateString("en-IN",{weekday:"short",day:"numeric",month:"short"})}
+var n=0;function uid(){return "t"+Date.now().toString(36)+(n++)}
+function h(x){return (Math.round(x*10)/10).toString()}
+
+var HARD=/algorithm|proof|theorem|deriv|design|analysis|complexity|optimi[sz]|advanced|normali[sz]ation|concurrency|deadlock|dynamic programming|graph|flow|probability|matrix|transform|compiler|cryptograph|machine learning|neural|recurrence|np-/i;
+var EASY=/introduction|intro\b|overview|basics?|history|fundamentals|terminology|applications?|types of|definition|concepts? of/i;
+function guess(t){return HARD.test(t)?3:EASY.test(t)?1:2}
+
+function parseSyllabus(text){
+  var seen={},out=[];
+  text.split(/\n+/).forEach(function(line){
+    line=line.replace(/^\s*(?:unit|module|chapter|topic)\s*[\dIVX]+\s*[:.\-–]?\s*/i,"").replace(/^\s*(?:[-*•]|\d+[.)])\s*/,"");
+    line.split(/[;,•]|\s[–—]\s/).forEach(function(p){
+      p=p.trim();var k=p.toLowerCase();
+      if(p.length>=3&&!seen[k]){seen[k]=1;out.push(p)}
+    });
+  });
+  return out;
+}
+
+$("example").onclick=function(){
+  $("syl").value="Unit 1: Introduction to DBMS, ER model, Relational algebra\nUnit 2: SQL queries, Joins and subqueries, Views\nUnit 3: Functional dependencies, Normalization (1NF to BCNF)\nUnit 4: Transactions, Concurrency control, Deadlock handling\nUnit 5: Indexing and B+ trees, Query optimization";
+  var d=new Date();d.setDate(d.getDate()+14);$("exam").value=iso(d);
+};
+
+$("analyse").onclick=function(){
+  var names=parseSyllabus($("syl").value);
+  if(!names.length){$("err").textContent="Paste your syllabus first.";return}
+  $("err").textContent="";
+  var old={};S.topics.forEach(function(t){old[t.name]=t.d});
+  S.topics=names.map(function(x){return{name:x,d:old[x]||guess(x)}});
+  renderTopics();
+};
+function renderTopics(){
+  $("topics-card").hidden=!S.topics.length;
+  $("topics").innerHTML=S.topics.map(function(t,i){
+    return '<div class="topic"><span>'+esc(t.name)+'</span><select data-i="'+i+'">'+
+      [[1,"Easy"],[2,"Medium"],[3,"Hard"]].map(function(o){return '<option value="'+o[0]+'"'+(t.d===o[0]?" selected":"")+'>'+o[1]+'</option>'}).join("")+
+      '</select><button class="x" data-rm="'+i+'" aria-label="Remove">✕</button></div>';
+  }).join("");
+}
+$("topics").addEventListener("change",function(e){if(e.target.dataset.i!==undefined){S.topics[+e.target.dataset.i].d=+e.target.value;save()}});
+$("topics").addEventListener("click",function(e){var b=e.target.closest("[data-rm]");if(b){S.topics.splice(+b.dataset.rm,1);renderTopics()}});
+
+// Lay items out day by day; the last day absorbs any rounding overflow.
+function fill(items,start,days,hpd){
+  var out=[],di=0,cap=hpd;
+  items.forEach(function(it){
+    var left=it.hrs;
+    while(left>0.01){
+      if(cap<=0.01&&di<days-1){di++;cap=hpd}
+      var take=Math.min(left,cap>0.01?cap:left);
+      out.push({id:uid(),topic:it.topic,hrs:take,date:add(start,di),done:false,rev:false});
+      left-=take;cap-=take;
+    }
+  });
+  return out;
+}
+
+$("build").onclick=function(){
+  var exam=$("exam").value,start=$("start").value||today(),hpd=+$("hpd").value||3;
+  if(!exam||diff(start,exam)<1){$("err").textContent="Pick an exam date after the start date.";return}
+  if(!S.topics.length){$("err").textContent="Analyse your syllabus first.";return}
+  if(S.tasks.some(function(t){return t.done})&&!confirm("This replaces your current plan and progress. Continue?"))return;
+  $("err").textContent="";
+  S.exam=exam;S.start=start;S.hpd=hpd;S.note="";
+  var total=diff(start,exam),rev=total>=6?Math.min(2,Math.floor(total/5)):0,study=total-rev;
+  var W=S.topics.reduce(function(a,t){return a+(t.w||t.d)},0),H=study*hpd;
+  S.tasks=fill(S.topics.map(function(t){return{topic:t.name,hrs:H*(t.w||t.d)/W}}),start,study,hpd);
+  var hard=S.topics.slice().sort(function(a,b){return b.d-a.d}).slice(0,6).map(function(t){return t.name}).join(", ");
+  for(var i=0;i<rev;i++)S.tasks.push({id:uid(),topic:"Revision: "+hard,hrs:hpd,date:add(start,study+i),done:false,rev:true});
+  save();view();
+};
+
+function resched(){
+  var t=today(),total=diff(t,S.exam);
+  if(total<1){S.note="The exam is today or has passed, so there’s nothing left to reschedule.";save();renderPlan();return}
+  var done=S.tasks.filter(function(x){return x.done});
+  var remS=S.tasks.filter(function(x){return !x.done&&!x.rev});
+  var remR=S.tasks.filter(function(x){return !x.done&&x.rev});
+  var rc=Math.min(remR.length,total-1),study=total-rc;
+  var need=remS.reduce(function(a,x){return a+x.hrs},0);
+  var eff=need/study>S.hpd?Math.ceil(need/study*2)/2:S.hpd;
+  var fresh=fill(remS.map(function(x){return{topic:x.topic,hrs:x.hrs}}),t,study,eff);
+  for(var i=0;i<rc;i++){var r=remR[i];fresh.push({id:uid(),topic:r.topic,hrs:Math.min(r.hrs,eff),date:add(t,study+i),done:false,rev:true})}
+  S.tasks=done.concat(fresh);
+  S.note=eff>S.hpd?"To finish everything you now need about "+h(eff)+" hours a day. Consider studying longer or trimming easy topics.":"Plan updated. You’re back on track at "+h(S.hpd)+" hours a day.";
+  save();renderPlan();
+}
+
+function view(){
+  var has=S.tasks.length>0;
+  $("setup").hidden=has;$("plan").hidden=!has;
+  if(has)renderPlan();else renderTopics();
+}
+function renderPlan(){
+  var t=today(),tot=0,dn=0,missed=0;
+  S.tasks.forEach(function(x){tot+=x.hrs;if(x.done)dn+=x.hrs;else if(x.date<t)missed+=x.hrs});
+  $("s-days").textContent=Math.max(0,diff(t,S.exam));
+  $("s-pct").textContent=(tot?Math.round(dn/tot*100):0)+"%";
+  $("s-hrs").textContent=h(tot-dn);
+  $("pbar").style.width=(tot?dn/tot*100:0)+"%";
+  var b=$("banner");
+  if(missed>0.01){b.hidden=false;b.innerHTML='<b>You’re behind by '+h(missed)+' hours.</b> <span class="small">Reschedule to spread the missed work over your remaining days.</span><div style="margin-top:8px"><button class="pri" id="rs">Reschedule now</button></div>'+(S.note?'<p class="small">'+esc(S.note)+'</p>':"");$("rs").onclick=resched}
+  else if(S.note){b.hidden=false;b.innerHTML='<span class="small">'+esc(S.note)+'</span>'}
+  else b.hidden=true;
+  var by={};S.tasks.forEach(function(x){(by[x.date]=by[x.date]||[]).push(x)});
+  $("days").innerHTML=Object.keys(by).sort().map(function(d){
+    var ts=by[d],late=d<t&&ts.some(function(x){return !x.done}),hrs=ts.reduce(function(a,x){return a+x.hrs},0);
+    return '<div class="card'+(d===t?" today":late?" miss":"")+'"><div class="dh"><span>'+fmt(d)+
+      (d===t?'<span class="tag">Today</span>':"")+(late?'<span class="tag bad">Missed</span>':"")+'</span><span class="small">'+h(hrs)+' h</span></div>'+
+      ts.map(function(x){return '<label class="task'+(x.done?" done":"")+'"><input type="checkbox" data-id="'+x.id+'"'+(x.done?" checked":"")+'><span>'+esc(x.topic)+(window.tipHtml?tipHtml(x):"")+'</span><em>'+h(x.hrs)+' h</em></label>'}).join("")+'</div>';
+  }).join("");
+}
+$("days").addEventListener("change",function(e){
+  var id=e.target.dataset.id;if(!id)return;
+  S.tasks.forEach(function(x){if(x.id===id){x.done=e.target.checked}});
+  S.note="";save();renderPlan();
+});
+$("edit").onclick=function(){
+  $("exam").value=S.exam;$("start").value=S.start;$("hpd").value=S.hpd;
+  $("syl").value=S.topics.map(function(x){return x.name}).join("\n");
+  $("setup").hidden=false;$("plan").hidden=true;renderTopics();
+};
+$("reset").onclick=function(){
+  if(!confirm("Delete your plan and start over?"))return;
+  S={exam:"",start:"",hpd:3,topics:[],tasks:[],note:""};save();
+  $("syl").value="";$("exam").value="";view();
+};
+$("copy").onclick=function(){
+  var by={};S.tasks.forEach(function(x){(by[x.date]=by[x.date]||[]).push(x)});
+  var txt=Object.keys(by).sort().map(function(d){
+    return fmt(d)+"\n"+by[d].map(function(x){return (x.done?"[x] ":"[ ] ")+x.topic+" ("+h(x.hrs)+" h)"}).join("\n");
+  }).join("\n\n");
+  try{navigator.clipboard.writeText(txt);$("copy").textContent="Copied ✓";setTimeout(function(){$("copy").textContent="Copy plan"},1500)}catch(e){}
+};
+$("start").value=S.start||today();
+if(S.exam)$("exam").value=S.exam;
+view();
+</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="ai.js"></script>
+</body>
+</html>
